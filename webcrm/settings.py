@@ -22,10 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'insecure-dev-key-change-me')
 
 # Add your hosts to the list.
-ALLOWED_HOSTS = os.environ.get(
-    'DJANGO_ALLOWED_HOSTS',
-    'localhost 127.0.0.1 crm.gazlogistic.com'
-).split()
+ALLOWED_HOSTS = ["*"]
 
 # Database
 DATABASES = {
