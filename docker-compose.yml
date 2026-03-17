@@ -21,7 +21,7 @@ services:
              python manage.py runserver 0.0.0.0:8000"
     environment:
       DB_HOST: db
-      DJANGO_ALLOWED_HOSTS: localhost 127.0.0.1 0.0.0.0 .ngrok-free.dev .ngrok.io
+      DJANGO_ALLOWED_HOSTS: localhost 127.0.0.1 0.0.0.0 .ngrok-free.dev .ngrok.io .gazlogistic.com
       CSRF_TRUSTED_ORIGINS: https://isopodous-fay-unlanded.ngrok-free.dev
     volumes:
       - .:/app
