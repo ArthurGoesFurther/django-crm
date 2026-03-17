@@ -24,7 +24,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'insecure-dev-key-change-me')
 # Add your hosts to the list.
 ALLOWED_HOSTS = os.environ.get(
     'DJANGO_ALLOWED_HOSTS',
-    'localhost 127.0.0.1'
+    'localhost 127.0.0.1 crm.gazlogistic.com'
 ).split()
 
 # Database
@@ -187,7 +187,14 @@ CSRF_COOKIE_SECURE = False
 SECURE_HSTS_PRELOAD = False
 X_FRAME_OPTIONS = "SAMEORIGIN"
 # Origins trusted for CSRF when behind a proxy (e.g. ngrok). Space-separated.
-CSRF_TRUSTED_ORIGINS = [x.strip() for x in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split() if x.strip()]
+CSRF_TRUSTED_ORIGINS = [
+    x.strip()
+    for x in os.environ.get(
+        'CSRF_TRUSTED_ORIGINS',
+        'https://crm.gazlogistic.com'
+    ).split()
+    if x.strip()
+]
 
 # ---- CRM settings ---- #
 
