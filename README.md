@@ -203,6 +203,14 @@ For testing and evaluation:
 * [Online Documentation](https://django-crm-admin.readthedocs.io)
 * [Changelog](https://github.com/DjangoCRM/django-crm/blob/main/CHANGELOG.md)
 
+### Production deploy (Docker + Nginx)
+
+1. Copy `deploy.env.example` to `deploy.env`, set `DJANGO_SECRET_KEY` and DB credentials (do not commit `deploy.env`).
+2. On the server: `sudo mkdir -p /var/www/crm/static /var/www/crm/media && sudo chown $USER:$USER /var/www/crm/static /var/www/crm/media`
+3. Start app: `docker compose -f docker-compose.prod.yml --env-file deploy.env up -d --build`
+4. Copy `nginx-crm.gazlogistic.com.conf.example` to your nginx sites (e.g. `/etc/nginx/sites-available/`), fix domain/cert paths, enable site, reload nginx.
+5. Get TLS cert: `sudo certbot --nginx -d crm.gazlogistic.com` (or use your cert paths in the config).
+
 ---
 
 ## Compatibility
