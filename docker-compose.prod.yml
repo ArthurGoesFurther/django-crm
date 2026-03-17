@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: crm_db
+      POSTGRES_USER: crm_user
+      POSTGRES_PASSWORD: crmpass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_user -d crm_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput --clear &&
+             gunicorn webcrm.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    environment:
+      DB_HOST: db
+      DJANGO_ALLOWED_HOSTS: "localhost 127.0.0.1 crm.gazlogistic.com"
+      DJANGO_DEBUG: "False"
+      CSRF_TRUSTED_ORIGINS: "https://crm.gazlogistic.com"
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  static_volume:
+  media_volume:
+
