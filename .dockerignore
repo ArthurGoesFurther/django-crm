@@ -1,0 +1,11 @@
+myvenv
+.git
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.coverage
+htmlcov
+*.sqlite3
+.env
+*.md

@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 from datetime import datetime as dt
@@ -21,26 +22,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'j1c=6$s-dh#$ywt@(q4cm=j&0c*!0x!e-qm6k1%yoliec(15tn'
 
 # Add your hosts to the list.
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost 127.0.0.1').split()
 
 # Database
 DATABASES = {
     'default': {
-        # for SQLite3
-        'ENGINE': 'django.db.backends.sqlite3',
-
-        # for MySQl
-        #'ENGINE': 'django.db.backends.mysql',
-        #'PORT': '3306',
-
-        # for PostgreSQL
-        # "ENGINE": "django.db.backends.postgresql",
-        # 'PORT': '5432',
-
-        'NAME': 'crm_db',
-        'USER': 'crm_user',
-        'PASSWORD': 'crmpass',
-        'HOST': 'localhost',
+        "ENGINE": "django.db.backends.postgresql",
+        'PORT': '5432',
+        'NAME': os.environ.get('DB_NAME', 'crm_db'),
+        'USER': os.environ.get('DB_USER', 'crm_user'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'crmpass'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
     }
 }
 
@@ -191,6 +183,8 @@ SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 SECURE_HSTS_PRELOAD = False
 X_FRAME_OPTIONS = "SAMEORIGIN"
+# Origins trusted for CSRF when behind a proxy (e.g. ngrok). Space-separated.
+CSRF_TRUSTED_ORIGINS = [x.strip() for x in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split() if x.strip()]
 
 # ---- CRM settings ---- #
 

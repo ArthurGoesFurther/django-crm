@@ -7,8 +7,12 @@ class AdminRedirectMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Check if the request is for the admin site and the user is not a superuser
-        if settings.SECRET_ADMIN_PREFIX in request.path and not request.user.is_superuser:
+        # Redirect only authenticated non-superusers (let anonymous reach login page)
+        if (
+            settings.SECRET_ADMIN_PREFIX in request.path
+            and request.user.is_authenticated
+            and not request.user.is_superuser
+        ):
             # Remove the '/admin' prefix and redirect to the CRM site's URL
             new_path = request.path.replace(
                 settings.SECRET_ADMIN_PREFIX, settings.SECRET_CRM_PREFIX)
