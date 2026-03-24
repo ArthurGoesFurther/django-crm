@@ -23,6 +23,7 @@ from common.utils.helpers import get_department_id
 from common.utils.notify_user import notify_user
 from common.utils.parse_full_name import parse_contacts_name
 from crm.forms.admin_forms import RequestForm
+from crm.models import Company
 from crm.models import Currency
 from crm.models import CrmEmail
 from crm.models import Deal
@@ -112,7 +113,7 @@ class RequestAdmin(CrmModelAdmin):
                 ('first_name', 'middle_name', 'last_name'),
                 ('email', 'phone'),
                 'website',
-                'company_name',
+                'company_pick',
                 ('country', 'city_name'),
                 ('description', 'translation'),
                 'remark',
@@ -192,8 +193,24 @@ class RequestAdmin(CrmModelAdmin):
         )
 
     def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        
+        form_class = super().get_form(request, obj, **kwargs)
+        admin_request = request
+
+        class RequestFormWithCompanyQueryset(form_class):
+            def __init__(self, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                qs = Company.objects.order_by('full_name')
+                user = admin_request.user
+                if user.is_authenticated and getattr(
+                    user, 'department_id', None,
+                ) and not (
+                    user.is_superuser or getattr(user, 'is_superoperator', False)
+                ):
+                    qs = qs.filter(department_id=user.department_id)
+                self.fields['company_pick'].queryset = qs
+
+        form = RequestFormWithCompanyQueryset
+
         if obj and getattr(obj, "deal", None):
             if "duplicate" in form.base_fields:
                 form.base_fields["duplicate"].widget = HiddenInput()

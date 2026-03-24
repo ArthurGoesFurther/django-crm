@@ -2,6 +2,7 @@ import json
 from email.utils import parseaddr
 from django import forms
 from django.conf import settings
+from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.validators import EmailValidator
 from django.db.models import Q
@@ -18,6 +19,7 @@ from crm.models import Deal
 from crm.models import Lead
 from crm.models import Request
 from crm.models import Tag
+from crm.site.crmadminsite import crm_site
 from crm.utils.helpers import phone_number_check
 from tasks.forms import clean_next_step_date
 
@@ -224,6 +226,13 @@ class DealForm(BaseCallablesForm):
 
 
 class RequestForm(forms.ModelForm):
+    company_pick = forms.ModelChoiceField(
+        queryset=Company.objects.none(),
+        required=False,
+        label=_("Company name"),
+        empty_label=_("---------"),
+    )
+
     class Meta:
         model = Request
         fields = '__all__'
@@ -236,8 +245,56 @@ class RequestForm(forms.ModelForm):
             ),
         }
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        if 'company_name' in self.fields:
+            del self.fields['company_name']
+        company_rel = Request._meta.get_field('company').remote_field
+        self.fields['company_pick'].widget = RelatedFieldWidgetWrapper(
+            self.fields['company_pick'].widget,
+            company_rel,
+            crm_site,
+            can_add_related=True,
+        )
+        self._apply_company_pick_initial()
+
+    def _apply_company_pick_initial(self) -> None:
+        if 'company_pick' in self.initial:
+            return
+        if self.instance.pk:
+            if self.instance.company_id:
+                self.initial['company_pick'] = self.instance.company_id
+            elif self.instance.company_name:
+                name = self.instance.company_name.strip()
+                if name:
+                    matched = Company.objects.filter(
+                        full_name__iexact=name,
+                    ).first()
+                    if matched:
+                        self.initial['company_pick'] = matched.pk
+        else:
+            company_obj = self.initial.get('company')
+            if company_obj:
+                self.initial['company_pick'] = (
+                    company_obj.id
+                    if hasattr(company_obj, 'id')
+                    else company_obj
+                )
+            elif self.initial.get('company_name'):
+                name = str(self.initial['company_name']).strip()
+                if name:
+                    matched = Company.objects.filter(
+                        full_name__iexact=name,
+                    ).first()
+                    if matched:
+                        self.initial['company_pick'] = matched.pk
+
     def clean(self):
         super().clean()
+        company_pick = self.cleaned_data.get('company_pick')
+        if company_pick:
+            self.cleaned_data['company_name'] = company_pick.full_name
+            self.cleaned_data['company'] = company_pick
         company = self.cleaned_data.get("company")
         contact = self.cleaned_data.get("contact")
         lead = self.cleaned_data.get("lead")
@@ -273,6 +330,17 @@ class RequestForm(forms.ModelForm):
         phone = self.cleaned_data.get('phone')
         phone_number_check(phone)
         return phone
+
+    def save(self, commit: bool = True) -> Request:
+        instance = super().save(commit=False)
+        company_pick = self.cleaned_data.get('company_pick')
+        if company_pick:
+            instance.company_name = company_pick.full_name
+            instance.company = company_pick
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
 
 file_path = settings.BASE_DIR / 'crm' / 'forms' / 'iso_currency_codes.json'
